@@ -1,7 +1,7 @@
 $(function () {
 	Appacitive.session.environment = 'live';
 	Appacitive.session.create({
-		apikey: '59lMD/wL+UpgQZJ95X20ML00K7YO2rEnkrKSGttHM9k='
+		apikey: 'ukaAo61yoZoeTJsGacH9TDRHnhf/J9/kH2TStR5sD3k='
 	});
 });
 
@@ -19,10 +19,10 @@ window.cache = {
 var backgroundRefreshItems = function() {
 	window.cache.lists.forEach(function (cachedList) {
 		if (cachedList._itemsFetched == true) return;
-		var lists = new Appacitive.ArticleCollection({ schema: 'list' });
+		var lists = new Appacitive.ArticleCollection({ schema: 'todolists' });
 		var list = lists.createNewArticle();
 		list.set('__id', cachedList.__id);
-		var items = list.getConnectedArticles({ relation: 'listitem' });
+		var items = list.getConnectedArticles({ relation: 'list_items' });
 		items.fetch(function() {
 			var itemArticles = [];
 			items.getAll().forEach(function (item) {
@@ -39,23 +39,24 @@ var backgroundRefreshItems = function() {
 
 var register = function() {
 	var username = $('#rusername').val().trim();
-	var password = Crypto.MD5($('#rpassword').val().trim());
+	//var password = Crypto.MD5($('#rpassword').val().trim());
+	var password = $('#rpassword').val().trim();
 	if (username.length == 0 || password.length == 0) {
 		alert('Enter your email and password to login');
 		return;
 	}
 	$('#rusername').val('');
 	$('#rpassword').val('');
-	var users = new Appacitive.ArticleCollection({ schema: 'person' });
-	var user = users.createNewArticle({
+
+	var user = {
 		email: username,
 		password: password,
 		firstname: username,
 		username: username
-	});
+	};
 
 	$('#btnRegister').attr('value', 'Registering...').attr('disabled', true);
-	user.save(function() {
+	Appacitive.Users.createUser(user, function() {
 		$('#btnRegister').attr('value', 'Register').attr('disabled', false);
 		$('#username').val(username);
 		$('#password').val('');
@@ -68,45 +69,48 @@ var register = function() {
 
 var login = function() {
 	var username = $('#username').val().trim();
-	var password = Crypto.MD5($('#password').val().trim());
+//	var password = Crypto.MD5($('#password').val().trim());
+	var password = $('#password').val().trim();
 	if (username.length == 0 || password.length == 0) {
 		alert('Enter your email and password to login');
 		return;
 	}
-	var users = new Appacitive.ArticleCollection({ schema: 'person' });
-	users.setFilter('*email == \'' + username + '\' and *password == \'' + password + '\'');
+
+	var creds = {
+    	'username': username,
+    	'password': password,
+    	'expiry': -1,
+    	'attempts': -1
+    };
 	$('#btnLogin').attr('value', 'Logging in...').attr('disabled', true);
-	users.fetch(function() {
-		$('#btnLogin').attr('value', 'Log In').attr('disabled', false);
-		if (users.getAll().length == 1) {
-			window.user = users.getAll()[0];
-			window.listMap = {};
-			$('#btnLogin').attr('value', 'Fetching lists...').attr('disabled', true);
-			fetchLists(function (lists) {
-				backgroundRefreshItems();
-				//setInterval(backgroundSyncLists, 10000);
-				$('#btnLogin').attr('value', 'Log In').attr('disabled', false);
-				renderLists(lists);
-				setTimeout(function() {
-					window.location.hash = 'lists';
-				}, 10);
-			}, function() {
-				$('#btnLogin').attr('value', 'Log In').attr('disabled', false);
-				alert('Could not retrieve your lists. Contact support.');
-			});
-		} else {
+    Appacitive.Users.authenticateUser(creds, function(data) {
+    	Appacitive.session.setUserAuthHeader(data.token);
+    	window.user = new Appacitive.Article(data.user);
+		window.listMap = {};
+		$('#btnLogin').attr('value', 'Fetching lists...').attr('disabled', true);
+    	
+    	fetchLists(function (lists) {
+			backgroundRefreshItems();
 			$('#btnLogin').attr('value', 'Log In').attr('disabled', false);
-			alert('Unknown username or password.');
-		}
-	}, function() {
-		$('#btnLogin').attr('value', 'Log In').attr('disabled', false);
+			renderLists(lists);
+			setTimeout(function() {
+				window.location.hash = 'lists';
+			}, 10);
+		}, function() {
+			$('#btnLogin').attr('value', 'Log In').attr('disabled', false);
+			alert('Could not retrieve your lists. Contact support.');
+		});
+    	
+    }, function(data) {
+    	$('#btnLogin').attr('value', 'Log In').attr('disabled', false);
 		alert('Unknown username or password.');
-	});
+    });
+
 }
 
 var fetchLists = function(onSuccess, onError) {
 	var loggedInUser = window.user;
-	var lists = loggedInUser.getConnectedArticles({ relation: 'mylists' });
+	var lists = loggedInUser.getConnectedArticles({ relation: 'user_lists' });
 	var listArticles = [];
 	lists.fetch(function() {
 		lists.getAll().forEach(function (connection) {
@@ -126,7 +130,7 @@ var backgroundSyncLists = function() {
 
 	// fetch the lists and update
 	var loggedInUser = window.user;
-	var lists = loggedInUser.getConnectedArticles({ relation: 'mylists' });
+	var lists = loggedInUser.getConnectedArticles({ relation: 'user_lists' });
 	var listArticles = [];
 	lists.fetch(function() {
 		lists.getAll().forEach(function (connection) {
@@ -174,8 +178,8 @@ var renderLists = function(lists) {
 	lists.forEach(function (list) {
 		buttonHtml = '<button style="float: right; margin-right: 20px; display: none;" data-id="';
 		buttonHtml += list.__id;
-		buttonHtml += '" data-entity="list" class="button">Delete</button>';
-		html += '<li class="arrow has-delete-button"><a class="list-name-display" data-listid="' + list.__id + '" href="javascript:void(0)">' + list.listname + '</a>'
+		buttonHtml += '" data-entity="todolists" class="button">Delete</button>';
+		html += '<li class="arrow has-delete-button"><a class="list-name-display" data-listid="' + list.__id + '" href="javascript:void(0)">' + list.list_name + '</a>'
 		html += buttonHtml + '</li>';
 	});
 	container.html(html);
@@ -195,10 +199,10 @@ var fetchListItems = function(onSuccess, onError) {
 	}
 
 	// fetch list items and cache
-	var lists = new Appacitive.ArticleCollection({ schema: 'list' });
+	var lists = new Appacitive.ArticleCollection({ schema: 'tasks' });
 	var list = lists.createNewArticle();
 	list.set('__id', window.listId);
-	var items = list.getConnectedArticles({ relation: 'listitem' });
+	var items = list.getConnectedArticles({ relation: 'list_items' });
 	items.fetch(function() {
 		var itemArticles = [];
 		items.getAll().forEach(function (item) {
@@ -217,8 +221,8 @@ var renderListItems = function(listItems) {
 	listItems.forEach(function (listItem) {
 		buttonHtml = '<button style="float: right; margin-right: 20px; display: none;" data-id="';
 		buttonHtml += listItem.__id;
-		if (listItem.status) iClass = 'item-done'; else iClass = '';
-		buttonHtml += '" data-entity="item" class="button">Delete</button>';
+		if (listItem.completed_at && listItem.completed_at.length>0) iClass = 'item-done'; else iClass = '';
+		buttonHtml += '" data-entity="tasks" class="button">Delete</button>';
 		html += '<li class="has-delete-button"><a href="javascript:void(0)" class="list-item-link ' + iClass + '">' + listItem.text + buttonHtml + '</a></li>';
 	});
 	$('#listItems h1').html(window.listName);
@@ -342,9 +346,9 @@ $('#btnCreateList').live('click', function() {
 	$('#txtListname').focus();
 	$this.attr('value', 'Saving...').attr('disabled', true);
 
-	var lists = new Appacitive.ArticleCollection({ schema: 'list' });
+	var lists = new Appacitive.ArticleCollection({ schema: 'todolists' });
 	var list = lists.createNewArticle();
-	list.set('listname', $('#txtListname').val().trim());
+	list.set('list_name', $('#txtListname').val().trim());
 	list.save(function() {
 
 		// first update the cache
@@ -372,14 +376,14 @@ $('#btnCreateList').live('click', function() {
 		var connectOptions = {
 	        __endpointa: {
 	            articleid: window.user.get('__id'),
-	            label: 'person'
+	            label: 'user'
 	        },
 	        __endpointb: {
 	            articleid: list.get('__id'),
-	            label: 'list'
+	            label: 'todolists'
 	        }
 	    };
-	    var cC = new Appacitive.ConnectionCollection({ relation: 'mylists' });
+	    var cC = new Appacitive.ConnectionCollection({ relation: 'user_lists' });
 	    var connection = cC.createNewConnection(connectOptions);
 	    connection.save(function() {
 	    	// nothing to do here
@@ -397,7 +401,7 @@ $('#btnCreateListItem').live('click', function() {
 	$this.attr('value', 'Creating...').attr('disabled', true);
 
 	// actually save in the API
-	var items = new Appacitive.ArticleCollection({ schema: 'item' });
+	var items = new Appacitive.ArticleCollection({ schema: 'tasks' });
 	var item = items.createNewArticle();
 	item.set('text', $('#txtListItem').val().trim());
 	item.save(function() {
@@ -421,14 +425,14 @@ $('#btnCreateListItem').live('click', function() {
 		var connectOptions = {
 	        __endpointa: {
 	            articleid: window.listId,
-	            label: 'list'
+	            label: 'todolists'
 	        },
 	        __endpointb: {
 	            articleid: item.get('__id'),
-	            label: 'item'
+	            label: 'tasks'
 	        }
 	    };
-	    var cC = new Appacitive.ConnectionCollection({ relation: 'listitem' });
+	    var cC = new Appacitive.ConnectionCollection({ relation: 'list_items' });
 	    var connection = cC.createNewConnection(connectOptions);
 	    connection.save(function() {
 	    	// do nothing, trust the cache to have worked properly
