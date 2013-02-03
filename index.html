@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Todo</title>
+		<meta charset="utf-8" />
+		<!--<style type="text/css" media="screen">@import "css/apple.css";</style>-->
+		<style type="text/css" media="screen">@import "css/jqtouch.css";</style>
+		<link href="css/custom.css" rel="stylesheet" />
+		<script src="js/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/jqtouch-jquery.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/jqtouch.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/appacitive.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/crypto.js" type="text/javascript" charset="utf-8"></script>
+		<script src="js/mustache.js" type="text/javascript" charset="utf-8"></script>
+
+
+		<script type="text/javascript">
+			$.jQTouch({
+				icon: '',
+				statusBar: 'black',
+				backSelector: false
+				//useFastTouch: false
+			});
+		</script>
+	</head>
+	<body>
+		<div id="login" class="current">
+			<div class="toolbar">
+				<h1>Login</h1>
+				<a class="button flip" href="#register">Register</a>
+			</div>
+			<div>
+				<form>
+					<ul>
+						<li><input type="email" name="username" id="username" placeholder="Email Address" /></li>
+						<li><input type="password" name="password" id="password" placeholder="Password" /></li>
+						<li>
+							<input type="submit" name="login" id="btnLogin" value="Loading..." style="display: inline-block;" disabled="disabled" />
+							<img src="img/apple/loading.gif" style="display: none;" id="imgLoggingIn" />
+						</li>
+					</ul>
+				</form>
+			</div>
+		</div>
+		<div id="register">
+			<div class="toolbar">
+				<h1>Register</h1>
+				<a class="button flip" href="#login">Login</a>
+			</div>
+			<div>
+				<form>
+					<ul>
+						<li><input type="email" name="username" id="rusername" placeholder="Email Address" /></li>
+						<li><input type="password" name="password" id="rpassword" placeholder="Password" /></li>
+						<li>
+							<input type="submit" name="login" id="btnRegister" value="Loading..." style="display: inline-block;" disabled="disabled" />
+							<img src="img/apple/loading.gif" style="display: none;" id="imgLoggingIn" />
+						</li>
+					</ul>
+				</form>
+			</div>
+		</div>
+		<div id="addList">
+			<div class="toolbar">
+				<h1>Create List</h1>
+				<a class="button flip" href="#lists">Back</a>
+			</div>
+			<div>
+				<form>
+					<ul>
+						<li><input type="text" name="listname" id="txtListname" placeholder="List name" /></li>
+						<li>
+							<input type="submit" name="login" id="btnCreateList" value="Save" style="display: inline-block;" />
+							<img src="img/apple/loading.gif" style="display: none;" id="imgCreatingList" />
+						</li>
+					</ul>
+				</form>
+			</div>
+		</div>
+		<div id="lists">
+			<div class="toolbar">
+				<h1>My Lists</h1>
+				<a class="button flip" href="#addList">Create List</a>
+			</div>
+			<div class="scroll">
+				<ul class="rounded" id="ulListNames">
+				</ul>
+			</div>
+		</div>
+		<div id="addListItem">
+			<div class="toolbar">
+				<h1>Add Item</h1>
+				<a class="button flip" href="#listItems">Back</a>
+			</div>
+			<div>
+				<form>
+					<ul>
+						<li><input type="text" name="listitem" id="txtListItem" placeholder="Details" /></li>
+						<li>
+							<input type="submit" name="login" id="btnCreateListItem" value="Save" style="display: inline-block;" />
+							<img src="img/apple/loading.gif" style="display: none;" id="imgCreatingListItem" />
+						</li>
+					</ul>
+				</form>
+			</div>
+		</div>
+		<div id="listItems">
+			<div class="toolbar">
+				<h1>About</h1>
+				<a href="#lists" class="button back">Lists</a>
+				<a class="button flip" href="#addListItem">Add Item</a>
+			</div>
+			<div class="scroll">
+				<ul class="rounded" id="ulListItems">
+				</ul>
+			</div>
+		</div>
+	</body>
+	<script src="js/main.js" type="text/javascript" charset="utf-8"></script>
+</html>
