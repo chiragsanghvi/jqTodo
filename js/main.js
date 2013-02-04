@@ -246,9 +246,10 @@ $('.list-name-display').live('click', function() {
 $('.list-item-link').live('click', function() {
 	var $this = $(this), newValue = null;
 	if ($this.hasClass('item-done')) {
-		newValue = false;
+		newValue = null;
 	} else {
-		newValue = true;
+		x = new Date().toISOString();
+		newValue = x.substring(0,x.indexOf('T'));
 	}
 	// update the UI
 	$this.toggleClass('item-done');
@@ -267,13 +268,13 @@ $('.list-item-link').live('click', function() {
 			});
 		}
 	});
-	window.cache.lists[listId]._items[itemIndex].status = newValue;
+	window.cache.lists[listId]._items[itemIndex].completed_at = newValue;
 
 	// finally, write to the api
-	var items = new Appacitive.ArticleCollection({ schema: 'item' });
+	var items = new Appacitive.ArticleCollection({ schema: 'tasks' });
 	var item = items.createNewArticle({ __id: itemId });
 	item.fetch(function() {
-		item.set('status', newValue + '');
+		item.set('completed_at', newValue + '');
 		item.save(function() {
 			// nothing to do here
 		}, function() {
@@ -299,7 +300,7 @@ $('.has-delete-button button').live('click', function() {
 	
 	// remove from cache and redirect
 	var indexToRemove = null;
-	if (entity == 'list') {
+	if (entity == 'todolists') {
 		window.cache.lists.forEach(function (list, index) {
 			if (list.__id == id) {
 				indexToRemove = index;
